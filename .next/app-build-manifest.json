@@ -12,7 +12,7 @@
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
       "static/chunks/255-09fb0d129bb12f51.js",
       "static/chunks/main-app-5d0a616e2d1745dc.js",
-      "static/css/c64f342daa6b5567.css",
+      "static/css/280effaef63416ab.css",
       "static/chunks/app/layout-12cd9970416080df.js"
     ],
     "/page": [
@@ -22,7 +22,7 @@
       "static/chunks/main-app-5d0a616e2d1745dc.js",
       "static/chunks/269-6024b57987a44656.js",
       "static/chunks/22-b4b49a8c144edc92.js",
-      "static/chunks/app/page-07324280e18baf0c.js"
+      "static/chunks/app/page-a7834e64ae1503c4.js"
     ],
     "/cars/[slug]/page": [
       "static/chunks/webpack-d4adbfd0da73ff1f.js",

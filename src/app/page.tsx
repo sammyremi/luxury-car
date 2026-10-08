@@ -5,6 +5,7 @@ import { IntroSection } from "@/components/IntroSection";
 import { EVSection } from "@/components/EVSection";
 import { TransitionSection } from "@/components/TransitionSection";
 import { CollectionSection } from "@/components/CollectionSection";
+import { CinematicVideoSection } from "@/components/CinematicVideoSection";
 import { BuySection } from "@/components/BuySection";
 import { RentalSection } from "@/components/RentalSection";
 import { WhyNovaCar } from "@/components/WhyNovaCar";
@@ -34,25 +35,28 @@ export default function HomePage() {
       {/* 6. Collection Intro & Horizontal Showroom */}
       <CollectionSection />
 
-      {/* 7. Buy / Acquisition Services Section */}
+      {/* 7. Full-Screen Cinematic Background Video (YouTube YAFUyPp_238) */}
+      <CinematicVideoSection />
+
+      {/* 8. Buy / Acquisition Services Section */}
       <BuySection />
 
-      {/* 8. Rental Services Section */}
+      {/* 9. Rental Services Section */}
       <RentalSection />
 
-      {/* 9. Why Nova Car Pillars */}
+      {/* 10. Why Nova Car Pillars */}
       <WhyNovaCar />
 
-      {/* 10. About Section */}
+      {/* 11. About Section */}
       <AboutSection />
 
-      {/* 11. Contact Section & WhatsApp Concierge */}
+      {/* 12. Contact Section & WhatsApp Concierge */}
       <ContactSection />
 
-      {/* 12. Final Cinematic CTA */}
+      {/* 13. Final Cinematic CTA */}
       <FinalCTA />
 
-      {/* 13. Brand Footer */}
+      {/* 14. Brand Footer */}
       <Footer />
     </main>
   );
