@@ -1,36 +1,36 @@
 {
   "pages": {
     "/_not-found/page": [
-      "static/chunks/webpack-d4adbfd0da73ff1f.js",
+      "static/chunks/webpack-cc677003e43f2d4f.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-09fb0d129bb12f51.js",
+      "static/chunks/255-e3caa50b8d4fa359.js",
       "static/chunks/main-app-5d0a616e2d1745dc.js",
       "static/chunks/app/_not-found/page-1512ce0f7a2b0d1d.js"
     ],
     "/layout": [
-      "static/chunks/webpack-d4adbfd0da73ff1f.js",
+      "static/chunks/webpack-cc677003e43f2d4f.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-09fb0d129bb12f51.js",
+      "static/chunks/255-e3caa50b8d4fa359.js",
       "static/chunks/main-app-5d0a616e2d1745dc.js",
-      "static/css/b207c1d61f78571f.css",
-      "static/chunks/app/layout-12cd9970416080df.js"
+      "static/css/4d10967cf9d0c585.css",
+      "static/chunks/app/layout-e80c1c180ad63fd0.js"
     ],
     "/page": [
-      "static/chunks/webpack-d4adbfd0da73ff1f.js",
+      "static/chunks/webpack-cc677003e43f2d4f.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-09fb0d129bb12f51.js",
+      "static/chunks/255-e3caa50b8d4fa359.js",
       "static/chunks/main-app-5d0a616e2d1745dc.js",
       "static/chunks/269-6024b57987a44656.js",
-      "static/chunks/22-b4b49a8c144edc92.js",
-      "static/chunks/app/page-d5408398671bbbd5.js"
+      "static/chunks/22-2ae75dd639526a5a.js",
+      "static/chunks/app/page-814b8518a9bfd86d.js"
     ],
     "/cars/[slug]/page": [
-      "static/chunks/webpack-d4adbfd0da73ff1f.js",
+      "static/chunks/webpack-cc677003e43f2d4f.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-09fb0d129bb12f51.js",
+      "static/chunks/255-e3caa50b8d4fa359.js",
       "static/chunks/main-app-5d0a616e2d1745dc.js",
       "static/chunks/269-6024b57987a44656.js",
-      "static/chunks/22-b4b49a8c144edc92.js",
+      "static/chunks/22-2ae75dd639526a5a.js",
       "static/chunks/app/cars/[slug]/page-04fd70a0d3c5239a.js"
     ]
   }

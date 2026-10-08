@@ -1,4 +1,5 @@
 import React from "react";
+import { SitePreloader } from "@/components/SitePreloader";
 import { Navigation } from "@/components/Navigation";
 import { HeroSection } from "@/components/HeroSection";
 import { IntroSection } from "@/components/IntroSection";
@@ -17,6 +18,9 @@ import { Footer } from "@/components/Footer";
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-darkBg text-white selection:bg-amber-500 selection:text-neutral-950">
+      {/* 0. Cinematic Site Preloader with 0-100% progress */}
+      <SitePreloader />
+
       {/* 1. Global Navigation Bar */}
       <Navigation />
 

@@ -2,8 +2,16 @@
   "version": 3,
   "pages404": true,
   "caseSensitive": false,
-  "basePath": "",
+  "basePath": "/luxury-car",
   "redirects": [
+    {
+      "source": "/luxury-car",
+      "destination": "/luxury-car/",
+      "basePath": false,
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^/luxury-car$"
+    },
     {
       "source": "/:file((?!\\.well-known(?:/.*)?)(?:[^/]+/)*[^/]+\\.\\w+)/",
       "destination": "/:file",
