@@ -51,11 +51,11 @@ export function EVSection() {
               </div>
 
               {/* Central Dynamic Caption */}
-              <div className="max-w-xl text-left bg-black/40 backdrop-blur-xl p-8 rounded-2xl border border-white/10 shadow-2xl transition-all duration-500 my-auto">
-                <h3 className="text-3xl md:text-5xl font-display font-light text-white mb-3 tracking-tight">
+              <div className="max-w-xs sm:max-w-md md:max-w-xl text-left bg-black/50 backdrop-blur-xl p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border border-white/10 shadow-2xl transition-all duration-500 my-auto">
+                <h3 className="text-xl sm:text-3xl md:text-5xl font-display font-light text-white mb-1.5 sm:mb-3 tracking-tight">
                   {title}
                 </h3>
-                <p className="text-sm md:text-base text-neutral-300 font-light leading-relaxed">
+                <p className="text-xs sm:text-sm md:text-base text-neutral-300 font-light leading-relaxed">
                   {subtitle}
                 </p>
               </div>
