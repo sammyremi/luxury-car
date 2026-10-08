@@ -1,83 +1,116 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getAssetUrl } from "@/lib/asset-url";
 import { useTheme } from "./ThemeProvider";
+import { porscheFrames, evFrames } from "@/data/animation-frames";
+
+// All animation frames that must be loaded before site opens
+const ALL_ANIMATION_FRAMES = [...porscheFrames, ...evFrames];
+
+// Total assets = 4 hero images + all animation frames
+const TOTAL_ASSETS = 4 + ALL_ANIMATION_FRAMES.length;
+
+// Concurrent image loading batch size
+const BATCH_SIZE = 20;
+
+// Maximum time (ms) to hold the preloader before force-releasing (safety net)
+const MAX_PRELOAD_MS = 10_000;
 
 export function SitePreloader() {
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [statusText, setStatusText] = useState("Loading");
+  const [loadedCount, setLoadedCount] = useState(0);
   const { theme } = useTheme();
+  const loadedRef = useRef(0);
 
   useEffect(() => {
-    // Reduced motion accessibility check
+    // Reduced-motion users skip the preloader entirely
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setIsComplete(true);
       return;
     }
 
-    // Critical initial assets required before revealing site
+    let released = false;
+    const startTime = Date.now();
+
+    const release = () => {
+      if (released) return;
+      released = true;
+      setProgress(100);
+      setStatusText("Ready");
+      setTimeout(() => setIsComplete(true), 400);
+    };
+
+    // Safety timeout – always release after MAX_PRELOAD_MS
+    const safetyTimer = setTimeout(release, MAX_PRELOAD_MS);
+
+    // Critical non-animation assets (hero images, etc.)
     const criticalAssets = [
       getAssetUrl("/cars/porche/gt side.webp"),
       getAssetUrl("/cars/porche/gt front.webp"),
       getAssetUrl("/cars/ferrari/ferrari side.webp"),
       getAssetUrl("/cars/aston martin/aston martin side.webp"),
-      // Phase 1 critical hero frames
-      getAssetUrl("/911gt-frames/frame_0001.webp"),
-      getAssetUrl("/911gt-frames/frame_0005.webp"),
-      getAssetUrl("/911gt-frames/frame_0010.webp"),
-      getAssetUrl("/ev-frames/frame_0001.webp"),
     ];
 
-    let loadedCount = 0;
-    const totalAssets = criticalAssets.length;
-    const startTime = Date.now();
-    const minPreloadDuration = 1400; // 1.4s smooth presentation hold
+    const allUrls = [
+      ...criticalAssets,
+      ...ALL_ANIMATION_FRAMES.map((f) => getAssetUrl(f)),
+    ];
 
-    const checkAssetProgress = () => {
-      loadedCount++;
-      const assetRatio = Math.min(1, loadedCount / totalAssets);
-      if (assetRatio > 0.7) {
+    // Smooth progress interval: 80% weight on actual loads, 20% on elapsed time
+    const total = TOTAL_ASSETS;
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const timeRatio = Math.min(1, elapsed / MAX_PRELOAD_MS);
+      const loadRatio = loadedRef.current / total;
+      const calculated = Math.floor(loadRatio * 80 + timeRatio * 20);
+      setProgress((prev) => Math.max(prev, Math.min(99, calculated)));
+
+      if (loadRatio > 0.85) {
+        setStatusText("Almost Ready");
+      } else if (loadRatio > 0.5) {
         setStatusText("Preparing Showcase");
-      } else if (assetRatio > 0.3) {
+      } else if (loadRatio > 0.2) {
         setStatusText("Caching Assets");
       }
+    }, 40);
+
+    // Load all URLs in parallel batches
+    const run = async () => {
+      for (let i = 0; i < allUrls.length; i += BATCH_SIZE) {
+        const batch = allUrls.slice(i, i + BATCH_SIZE).map(
+          (src) =>
+            new Promise<void>((resolve) => {
+              const img = new Image();
+              img.src = src;
+              const done = () => {
+                loadedRef.current++;
+                setLoadedCount(loadedRef.current);
+                resolve();
+              };
+              img.onload = done;
+              img.onerror = done;
+            })
+        );
+        await Promise.all(batch);
+        if (released) break;
+      }
+
+      clearInterval(interval);
+      clearTimeout(safetyTimer);
+      release();
     };
 
-    criticalAssets.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-      img.onload = checkAssetProgress;
-      img.onerror = checkAssetProgress;
-    });
+    run();
 
-    // Smooth weighted progress calculation to 100%
-    const interval = setInterval(() => {
-      const elapsedTime = Date.now() - startTime;
-      const timeRatio = Math.min(1, elapsedTime / minPreloadDuration);
-      const assetRatio = Math.min(1, loadedCount / totalAssets);
-
-      // Weighted calculation: 60% time, 40% asset readiness
-      const calculatedProgress = Math.floor(timeRatio * 60 + assetRatio * 40);
-
-      setProgress((prev) => {
-        const nextVal = Math.max(prev, Math.min(100, calculatedProgress));
-
-        if (nextVal >= 100 || elapsedTime >= 2500) { // Safety timeout at 2.5s
-          clearInterval(interval);
-          setStatusText("Ready");
-          setTimeout(() => {
-            setIsComplete(true);
-          }, 350);
-          return 100;
-        }
-
-        return nextVal;
-      });
-    }, 25);
-
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(safetyTimer);
+      released = true;
+    };
   }, []);
 
   if (isComplete) return null;
@@ -127,6 +160,11 @@ export function SitePreloader() {
             style={{ width: `${progress}%` }}
           />
         </div>
+
+        {/* Asset count sub-label */}
+        <span className="text-[10px] uppercase tracking-ultra font-mono text-neutral-500">
+          {Math.min(loadedCount, TOTAL_ASSETS)} / {TOTAL_ASSETS} assets
+        </span>
       </div>
 
       {/* Footer Details */}

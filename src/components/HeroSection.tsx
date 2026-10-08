@@ -43,7 +43,7 @@ export function HeroSection() {
                   Driven by desire.
                 </p>
                 <p className="text-sm md:text-base font-normal text-amber-400/90 max-w-md mb-8 leading-relaxed">
-                  Luxury vehicles for sale and rent. Selected for performance, presence, and character.
+                  <span className="md:hidden">Luxury vehicles for sale and rent. Selected for performance,<br />presence, and character.</span><span className="hidden md:inline">Luxury vehicles for sale and rent. Selected for performance, presence, and character.</span>
                 </p>
 
                 {/* Hero CTAs */}
