@@ -31,7 +31,6 @@ export function HeroSection() {
               {/* Top empty space to allow room for navigation */}
               <div className="pt-24" />
 
-              {/* Central Minimal Editorial Hero Copy */}
               <div className="max-w-2xl text-left pointer-events-auto">
                 <span className="inline-block text-xs uppercase tracking-ultra font-semibold text-amber-400 mb-3 drop-shadow-[0_1px_4px_rgba(0,0,0,0.1)]">
                   The Art of Performance

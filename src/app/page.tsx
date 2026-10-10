@@ -13,6 +13,7 @@ import { WhyNovaCar } from "@/components/WhyNovaCar";
 import { AboutSection } from "@/components/AboutSection";
 import { ContactSection } from "@/components/ContactSection";
 import { FinalCTA } from "@/components/FinalCTA";
+import { ShowcaseVideoSection } from "@/components/ShowcaseVideoSection";
 import { Footer } from "@/components/Footer";
 
 export default function HomePage() {
@@ -60,7 +61,10 @@ export default function HomePage() {
       {/* 13. Final Cinematic CTA */}
       <FinalCTA />
 
-      {/* 14. Brand Footer */}
+      {/* 14. Fullscreen Showcase Video */}
+      <ShowcaseVideoSection />
+
+      {/* 15. Brand Footer */}
       <Footer />
     </main>
   );
