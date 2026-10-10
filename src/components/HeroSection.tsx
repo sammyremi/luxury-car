@@ -33,24 +33,26 @@ export function HeroSection() {
 
               {/* Central Minimal Editorial Hero Copy */}
               <div className="max-w-2xl text-left pointer-events-auto">
-                <span className="inline-block text-xs uppercase tracking-ultra font-semibold text-amber-400 mb-3 drop-shadow">
+                <span className="inline-block text-xs uppercase tracking-ultra font-semibold text-amber-400 mb-3 drop-shadow-[0_1px_4px_rgba(0,0,0,0.1)]">
                   The Art of Performance
                 </span>
-                <h1 className="text-4xl md:text-7xl font-display font-light tracking-tight text-white mb-4 leading-[1.05]">
+                <h1 className="text-4xl md:text-7xl font-display font-light tracking-tight text-white mb-4 leading-[1.05] drop-shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
                   NOVA CAR<span className="text-amber-500 font-semibold">.</span>
                 </h1>
-                <p className="text-xl md:text-3xl font-extralight tracking-wide text-amber-400 mb-4">
+                <p className="text-xl md:text-3xl font-extralight tracking-wide text-amber-400 mb-4 drop-shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
                   Driven by desire.
                 </p>
-                <p className="text-sm md:text-base font-normal text-amber-400/90 max-w-md mb-8 leading-relaxed">
-                  <span className="md:hidden">Luxury vehicles for sale and rent. Selected for performance,<br />presence, and character.</span><span className="hidden md:inline">Luxury vehicles for sale and rent. Selected for performance, presence, and character.</span>
+                <p className="text-sm sm:text-base font-normal text-amber-400 max-w-md mb-8 leading-snug">
+                  Luxury vehicles for sale and rent.<br />
+                  Selected for performance<br />
+                  presence, and character
                 </p>
 
                 {/* Hero CTAs */}
                 <div className="flex flex-wrap items-center gap-4">
                   <a
                     href="#collection"
-                    className="px-7 py-3.5 rounded-full text-xs font-semibold uppercase tracking-widest bg-white text-neutral-900 hover:bg-neutral-200 transition-all duration-300 shadow-xl"
+                    className="px-7 py-3.5 rounded-full text-xs font-semibold uppercase tracking-widest bg-white text-neutral-900 hover:bg-neutral-200 transition-all duration-300 shadow-black/10 shadow-md"
                   >
                     Explore Collection
                   </a>

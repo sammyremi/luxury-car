@@ -1,18 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { getAssetUrl } from "@/lib/asset-url";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "./ThemeProvider";
-import { porscheFrames, evFrames } from "@/data/animation-frames";
-
-// All animation frames that must be loaded before site opens
-const ALL_ANIMATION_FRAMES = [...porscheFrames, ...evFrames];
-
-// Total assets = 4 hero images + all animation frames
-const TOTAL_ASSETS = 4 + ALL_ANIMATION_FRAMES.length;
-
-// Concurrent image loading batch size
-const BATCH_SIZE = 20;
+import { frameLoader } from "@/lib/frame-loader";
 
 // Maximum time (ms) to hold the preloader before force-releasing (safety net)
 const MAX_PRELOAD_MS = 10_000;
@@ -22,8 +12,8 @@ export function SitePreloader() {
   const [isComplete, setIsComplete] = useState(false);
   const [statusText, setStatusText] = useState("Loading");
   const [loadedCount, setLoadedCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(244);
   const { theme } = useTheme();
-  const loadedRef = useRef(0);
 
   useEffect(() => {
     // Reduced-motion users skip the preloader entirely
@@ -33,7 +23,6 @@ export function SitePreloader() {
     }
 
     let released = false;
-    const startTime = Date.now();
 
     const release = () => {
       if (released) return;
@@ -46,68 +35,21 @@ export function SitePreloader() {
     // Safety timeout – always release after MAX_PRELOAD_MS
     const safetyTimer = setTimeout(release, MAX_PRELOAD_MS);
 
-    // Critical non-animation assets (hero images, etc.)
-    const criticalAssets = [
-      getAssetUrl("/cars/porche/gt side.webp"),
-      getAssetUrl("/cars/porche/gt front.webp"),
-      getAssetUrl("/cars/ferrari/ferrari side.webp"),
-      getAssetUrl("/cars/aston martin/aston martin side.webp"),
-    ];
+    // Preload Porsche frames + critical assets with real progress tracking
+    frameLoader.preloadInitialBatch(({ loaded, total, percentage, statusText: text }) => {
+      if (released) return;
+      setLoadedCount(loaded);
+      setTotalCount(total);
+      setProgress(percentage);
+      setStatusText(text);
 
-    const allUrls = [
-      ...criticalAssets,
-      ...ALL_ANIMATION_FRAMES.map((f) => getAssetUrl(f)),
-    ];
-
-    // Smooth progress interval: 80% weight on actual loads, 20% on elapsed time
-    const total = TOTAL_ASSETS;
-
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const timeRatio = Math.min(1, elapsed / MAX_PRELOAD_MS);
-      const loadRatio = loadedRef.current / total;
-      const calculated = Math.floor(loadRatio * 80 + timeRatio * 20);
-      setProgress((prev) => Math.max(prev, Math.min(99, calculated)));
-
-      if (loadRatio > 0.85) {
-        setStatusText("Almost Ready");
-      } else if (loadRatio > 0.5) {
-        setStatusText("Preparing Showcase");
-      } else if (loadRatio > 0.2) {
-        setStatusText("Caching Assets");
+      if (loaded >= total) {
+        clearTimeout(safetyTimer);
+        release();
       }
-    }, 40);
-
-    // Load all URLs in parallel batches
-    const run = async () => {
-      for (let i = 0; i < allUrls.length; i += BATCH_SIZE) {
-        const batch = allUrls.slice(i, i + BATCH_SIZE).map(
-          (src) =>
-            new Promise<void>((resolve) => {
-              const img = new Image();
-              img.src = src;
-              const done = () => {
-                loadedRef.current++;
-                setLoadedCount(loadedRef.current);
-                resolve();
-              };
-              img.onload = done;
-              img.onerror = done;
-            })
-        );
-        await Promise.all(batch);
-        if (released) break;
-      }
-
-      clearInterval(interval);
-      clearTimeout(safetyTimer);
-      release();
-    };
-
-    run();
+    });
 
     return () => {
-      clearInterval(interval);
       clearTimeout(safetyTimer);
       released = true;
     };
@@ -163,7 +105,7 @@ export function SitePreloader() {
 
         {/* Asset count sub-label */}
         <span className="text-[10px] uppercase tracking-ultra font-mono text-neutral-500">
-          {Math.min(loadedCount, TOTAL_ASSETS)} / {TOTAL_ASSETS} assets
+          {Math.min(loadedCount, totalCount)} / {totalCount} assets
         </span>
       </div>
 

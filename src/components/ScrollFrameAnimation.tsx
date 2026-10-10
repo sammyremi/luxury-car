@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { getAssetPath } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { frameLoader } from "@/lib/frame-loader";
 
 interface ScrollFrameAnimationProps {
   id?: string;
@@ -10,7 +11,6 @@ interface ScrollFrameAnimationProps {
   fallbackImage: string;
   heightInVh?: number; // e.g. 400 for 400vh
   overlayContent?: (progress: number) => React.ReactNode;
-  initialFrameCount?: number; // Number of frames to load before initial render
 }
 
 export function ScrollFrameAnimation({
@@ -19,20 +19,18 @@ export function ScrollFrameAnimation({
   fallbackImage,
   heightInVh = 400,
   overlayContent,
-  initialFrameCount = 12,
 }: ScrollFrameAnimationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [loadedCount, setLoadedCount] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
-  // In-memory cache for loaded HTMLImageElements
-  const imagesCacheRef = useRef<Map<number, HTMLImageElement>>(new Map());
   const currentFrameIndexRef = useRef<number>(-1);
   const animationFrameIdRef = useRef<number | null>(null);
   const isReducedMotionRef = useRef<boolean>(false);
+  const lastScrollProgressRef = useRef<number>(0);
 
   // Helper to draw a single image onto canvas keeping aspect ratio centered
   const drawImageToCanvas = useCallback((img: HTMLImageElement) => {
@@ -62,91 +60,70 @@ export function ScrollFrameAnimation({
     ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
   }, []);
 
-  // Preload frames logic
+  // Frame helper: gets cached image or nearest cached frame
+  const getFrameImage = useCallback(
+    (index: number): HTMLImageElement | null => {
+      if (index < 0 || index >= frames.length) return null;
+
+      // 1. Direct hit
+      const img = frameLoader.getCachedImage(frames[index]);
+      if (img) return img;
+
+      // 2. Nearest frame search
+      for (let offset = 1; offset < 30; offset++) {
+        const left = index - offset;
+        if (left >= 0) {
+          const leftImg = frameLoader.getCachedImage(frames[left]);
+          if (leftImg) return leftImg;
+        }
+        const right = index + offset;
+        if (right < frames.length) {
+          const rightImg = frameLoader.getCachedImage(frames[right]);
+          if (rightImg) return rightImg;
+        }
+      }
+
+      return null;
+    },
+    [frames]
+  );
+
+  // Initial load check & frame readiness
   useEffect(() => {
     let isMounted = true;
-    const totalFrames = frames.length;
-    let initialLoaded = 0;
 
-    // Check reduced motion
     isReducedMotionRef.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    // Helper to load frame index
-    const loadFrame = (index: number): Promise<HTMLImageElement> => {
-      return new Promise((resolve, reject) => {
-        if (imagesCacheRef.current.has(index)) {
-          resolve(imagesCacheRef.current.get(index)!);
-          return;
-        }
-
-        const img = new Image();
-        const src = getAssetPath(frames[index]);
-        img.src = src;
-
-        img.onload = () => {
-          if (!isMounted) return;
-          imagesCacheRef.current.set(index, img);
-          resolve(img);
-        };
-
-        img.onerror = () => {
-          if (!isMounted) return;
-          console.warn(`Failed to load frame at index ${index}: ${src}`);
-          reject(new Error(`Failed to load frame ${index}`));
-        };
-      });
-    };
-
-    // Step 1: Load initial frames first to start interactive experience quickly
-    const loadInitialBatch = async () => {
-      const initialIndicesToLoad: number[] = [];
-      const step = Math.max(1, Math.floor(totalFrames / initialFrameCount));
-      for (let i = 0; i < totalFrames; i += step) {
-        initialIndicesToLoad.push(i);
-      }
-      if (!initialIndicesToLoad.includes(0)) initialIndicesToLoad.unshift(0);
-
+    const initAnimation = async () => {
       try {
-        await Promise.allSettled(initialIndicesToLoad.map((idx) => loadFrame(idx)));
+        // Try rendering frame 0 immediately
+        const firstImg = await frameLoader.loadAndDecodeImage(frames[0]);
         if (!isMounted) return;
 
-        // Render first frame immediately
-        const firstImg = imagesCacheRef.current.get(0);
         if (firstImg) {
           drawImageToCanvas(firstImg);
           currentFrameIndexRef.current = 0;
-        }
-
-        setIsLoading(false);
-
-        // Step 2: Progressively preload all remaining frames in priority order
-        for (let i = 0; i < totalFrames; i++) {
-          if (!isMounted) break;
-          try {
-            await loadFrame(i);
-            initialLoaded++;
-            if (i % 10 === 0) {
-              setLoadedCount(initialLoaded);
-            }
-          } catch {
-            // continue loading other frames
-          }
+          setIsLoading(false);
+        } else {
+          setIsLoading(false);
         }
       } catch (err) {
-        console.error("Error during initial frame batch loading", err);
-        setLoadError(true);
-        setIsLoading(false);
+        console.error("Failed to render initial frame", err);
+        if (isMounted) {
+          setLoadError(true);
+          setIsLoading(false);
+        }
       }
     };
 
-    loadInitialBatch();
+    initAnimation();
 
     return () => {
       isMounted = false;
     };
-  }, [frames, initialFrameCount, drawImageToCanvas]);
+  }, [frames, drawImageToCanvas]);
 
   // Handle Resize canvas resolution to match display size cleanly
   useEffect(() => {
@@ -162,10 +139,10 @@ export function ScrollFrameAnimation({
         canvas.width = width * dpr;
         canvas.height = height * dpr;
 
-        // Redraw current frame after resize
         const currentIndex = currentFrameIndexRef.current;
-        if (currentIndex >= 0 && imagesCacheRef.current.has(currentIndex)) {
-          drawImageToCanvas(imagesCacheRef.current.get(currentIndex)!);
+        if (currentIndex >= 0) {
+          const img = getFrameImage(currentIndex);
+          if (img) drawImageToCanvas(img);
         }
       }
     };
@@ -173,11 +150,9 @@ export function ScrollFrameAnimation({
     updateCanvasSize();
     window.addEventListener("resize", updateCanvasSize);
     return () => window.removeEventListener("resize", updateCanvasSize);
-  }, [drawImageToCanvas]);
+  }, [drawImageToCanvas, getFrameImage]);
 
-  // Scroll Driven Frame Index Calculation via requestAnimationFrame
-  const [scrollProgress, setScrollProgress] = useState(0);
-
+  // Scroll-driven RAF rendering loop
   useEffect(() => {
     const handleScroll = () => {
       if (animationFrameIdRef.current !== null) return;
@@ -192,12 +167,16 @@ export function ScrollFrameAnimation({
 
         if (totalScrollableDistance <= 0) return;
 
-        // Progress from 0 (top of section entering viewport) to 1 (bottom leaving)
+        // Progress from 0 to 1
         const currentScroll = -rect.top;
         const rawProgress = currentScroll / totalScrollableDistance;
         const progress = Math.max(0, Math.min(1, rawProgress));
 
-        setScrollProgress(progress);
+        // Throttle React state update to avoid re-rendering on sub-pixel scroll ticks
+        if (Math.abs(progress - lastScrollProgressRef.current) > 0.003 || progress === 0 || progress === 1) {
+          lastScrollProgressRef.current = progress;
+          setScrollProgress(progress);
+        }
 
         if (isReducedMotionRef.current) return;
 
@@ -207,37 +186,19 @@ export function ScrollFrameAnimation({
           Math.max(0, Math.floor(progress * (totalFrames - 1)))
         );
 
-        // Only redraw if frame index actually changed
+        // Only redraw canvas if target index changed
         if (targetFrameIndex !== currentFrameIndexRef.current) {
-          const cachedImg = imagesCacheRef.current.get(targetFrameIndex);
-          if (cachedImg) {
-            drawImageToCanvas(cachedImg);
+          const img = getFrameImage(targetFrameIndex);
+          if (img) {
+            drawImageToCanvas(img);
             currentFrameIndexRef.current = targetFrameIndex;
-          } else {
-            // Find nearest cached frame if exact frame is still preloading
-            let nearestIndex = targetFrameIndex;
-            for (let offset = 1; offset < 20; offset++) {
-              if (imagesCacheRef.current.has(targetFrameIndex - offset)) {
-                nearestIndex = targetFrameIndex - offset;
-                break;
-              }
-              if (imagesCacheRef.current.has(targetFrameIndex + offset)) {
-                nearestIndex = targetFrameIndex + offset;
-                break;
-              }
-            }
-            const nearestImg = imagesCacheRef.current.get(nearestIndex);
-            if (nearestImg) {
-              drawImageToCanvas(nearestImg);
-              currentFrameIndexRef.current = nearestIndex;
-            }
           }
         }
       });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // initial trigger
+    handleScroll();
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -245,7 +206,7 @@ export function ScrollFrameAnimation({
         cancelAnimationFrame(animationFrameIdRef.current);
       }
     };
-  }, [frames.length, drawImageToCanvas]);
+  }, [frames.length, drawImageToCanvas, getFrameImage]);
 
   return (
     <div
