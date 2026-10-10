@@ -1,121 +1,39 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { getAssetPath } from "@/lib/utils";
-
-interface YTPlayer {
-  playVideo: () => void;
-  destroy: () => void;
-}
-
-interface YTGlobal {
-  Player: new (
-    elementId: HTMLElement | string,
-    options: Record<string, unknown>
-  ) => YTPlayer;
-}
-
-declare global {
-  interface Window {
-    YT?: YTGlobal;
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
+import React, { useRef, useEffect } from "react";
+import { getAssetUrl } from "@/lib/asset-url";
 
 export function CinematicVideoSection() {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const videoId = "YAFUyPp_238";
-
-  // Official YouTube Embed parameters:
-  // autoplay=1, mute=1, controls=0, loop=1, playlist=videoId, playsinline=1, rel=0, disablekb=1
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&playsinline=1&rel=0&disablekb=1&enablejsapi=1`;
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    let player: YTPlayer | null = null;
-
-    const initYT = () => {
-      if (window.YT && window.YT.Player && iframeRef.current) {
-        try {
-          player = new window.YT.Player(iframeRef.current, {
-            playerVars: {
-              autoplay: 1,
-              mute: 1,
-              controls: 0,
-              loop: 1,
-              playlist: videoId,
-              playsinline: 1,
-              rel: 0,
-              disablekb: 1,
-            },
-            events: {
-              onReady: (e: { target: { playVideo: () => void } }) => {
-                e.target.playVideo();
-                setIsLoaded(true);
-              },
-            },
-          });
-        } catch {
-          // fallback if YT constructor is occupied
-        }
-      }
-    };
-
-    if (window.YT && window.YT.Player) {
-      initYT();
-    } else {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
-
-      const oldCallback = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        if (oldCallback) oldCallback();
-        initYT();
-      };
+    // Ensure muted autoplay runs immediately across WebKit/Mobile browsers
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.play().catch((err) => {
+        console.warn("Autoplay prevented:", err);
+      });
     }
-
-    return () => {
-      if (player && typeof player.destroy === "function") {
-        player.destroy();
-      }
-    };
-  }, [videoId]);
+  }, []);
 
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-black text-white flex items-center justify-center border-0 p-0 m-0">
-      {/* Fallback Poster Background */}
-      <div
-        className={`absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-1000 ${
-          isLoaded ? "opacity-0" : "opacity-100"
-        }`}
-        style={{
-          backgroundImage: `url(${getAssetPath("/cars/aston martin/aston martin side.webp")})`,
-        }}
-      >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      </div>
-
-      {/* Persistent Overscaled YouTube Background Iframe Container */}
+    <section className="relative w-full h-screen overflow-hidden bg-black text-white flex items-center justify-center border-0 p-0 m-0 select-none">
+      {/* Background Fullscreen Video */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <iframe
-          ref={iframeRef}
-          src={embedUrl}
-          title="Nova Car Cinematic Background"
-          onLoad={() => setIsLoaded(true)}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none scale-125"
-          style={{
-            width: "max(120vw, 213.33vh)",
-            height: "max(120vh, 67.5vw)",
-            minWidth: "120%",
-            minHeight: "120%",
-          }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          tabIndex={-1}
+        <video
+          ref={videoRef}
+          src={getAssetUrl("/videos/bmw-m3-cinematic.mp4")}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          className="w-full h-full object-cover pointer-events-none transform-gpu scale-[1.01]"
         />
-        {/* Seamless Gradient Vignette Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-darkBg via-transparent to-darkBg/80 pointer-events-none" />
+        {/* Seamless Dark Gradient Overlay for Readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-darkBg via-black/40 to-darkBg/80 pointer-events-none" />
       </div>
 
       {/* Brand Overlay Content */}
